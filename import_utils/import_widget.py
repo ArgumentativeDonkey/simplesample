@@ -1,4 +1,5 @@
-from PySide6.QtWidgets import QWidget, QPushButton, QFileDialog, QVBoxLayout, QTreeView, QListView
+from pathlib import Path
+from PySide6.QtWidgets import QWidget, QPushButton, QFileDialog, QVBoxLayout, QTreeView, QListView, QMessageBox, QCheckBox
 from import_utils import ImportManager, SUPPORTED_AUDIO_FILES
 
 MEDIA_FILTER = f"Media Files ({' '.join('*' + filetype for filetype in SUPPORTED_AUDIO_FILES)});;All Files (*)"
@@ -39,7 +40,32 @@ class Importer(QWidget):
         dialog = MixedFileDialog(self, "Select Files or Folders", filter_str=MEDIA_FILTER)
 
         if dialog.exec():
-            selected_paths = dialog.selectedFiles()
+            selected_paths = [Path(file) for file in dialog.selectedFiles()]
             print(f"Selected: \n{selected_paths}")
+            imported = 0
+            skip_warnings = False
+            for path in selected_paths:
+                try:
+                    imported += self.import_manager.import_path(path)
+                except (ValueError, FileNotFoundError) as e:
+                    if not skip_warnings:
+                        msg = QMessageBox(self)
+                        msg.setIcon(QMessageBox.Icon.Critical)
+                        msg.setWindowTitle("Import Error")
+                        msg.setText(f"Encountered an error importing {path.name}: {e}")
+                        cb = QCheckBox("Ignore warnings for the rest of the files")
+                        msg.setCheckBox(cb)
+                        msg.exec()
+
+                        if cb.isChecked():
+                            skip_warnings = True
+                        
+            if self.autosave:
+                self.import_manager.save()
+
+            if imported:
+                QMessageBox.information(self, "Imported Files", f"Imported {imported} {'file' if imported == 1 else 'files'}")
+            else:
+                QMessageBox.warning(self, "Imported Files", "No files were imported.")
         else:
             print("Cancelled operation.")

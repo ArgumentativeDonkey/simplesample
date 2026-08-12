@@ -18,6 +18,11 @@ class MainWindow(QMainWindow):
 
         self.import_manager = ImportManager(Path("./import.list"))
 
+        print("Tidying...")
+        self.import_manager.tidy()
+        self.import_manager.save()
+        print("Done tidying.")
+
         layout = QVBoxLayout()
         audio_import_button = import_widget.Importer(self.import_manager)
         #button.setCheckable(True)

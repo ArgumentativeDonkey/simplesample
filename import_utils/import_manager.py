@@ -11,13 +11,13 @@ class ImportManager:
             self.storage_path = storage_path
         if self.storage_path is not None:
             try:
-                with self.storage_path.open("r") as f:
+                with self.storage_path.open("r", encoding="utf-8") as f:
                     print("retrieving imported paths...")
                     lines = f.readlines()
-                    self.imported_paths = [Path(line) for line in lines]
+                    self.imported_paths = [Path(line.strip()) for line in lines]
                     print("imported paths imported!")
             except FileNotFoundError:
-                pass
+                print("storage_path not found.")
 
     def tidy(self):
         """Tidies up imports by removing an import if it does not exist or is no longer a file"""
@@ -44,13 +44,16 @@ class ImportManager:
         self.imported_paths.append(path)
         print(f"{path.name} imported")
 
-    def import_directory(self, path: Path):
+    def import_directory(self, path: Path) -> int:
         """Import the entire contents of a directory (including is subdirectories).
         All files, regardless of type, will try to be imported.
         This will not throw an exception if the directory is empty or contains no audio files.
 
         Args:
             path (Path): The path to the directory. Must point to a directory.
+
+        Returns:
+            The number of files added to the import manager
         """
         if not path.exists():
             raise FileNotFoundError("that location does not exist")
@@ -59,26 +62,30 @@ class ImportManager:
             raise ValueError("that location leads to a directory, not a file")
 
         print(f"importing {path}...")
+        imported = 0
         files = [path for path in path.rglob("*") if path.is_file()]
         for file in files:
             try:
                 self.import_file(file)
+                imported += 1
             except ValueError:
                 pass
             except FileNotFoundError as e:
                 print(f"internal error detected when trying to import {file}: {e}")
-        print(f"files from {path} imported")
+        print(f"{imported} files from {path} imported")
+        return imported
 
-    def import_path(self, path: Path):
+    def import_path(self, path: Path) -> int:
         """Import from a Path. Automatically detects whether a path is a file or a directory.
 
         Args:
             path (Path): The path to whatever you are trying to import.
         """
         if path.is_file():
-            self.import_path(path)
+            self.import_file(path)
+            return 1
         else:
-            self.import_directory(path)
+            return self.import_directory(path)
     
     def save(self, storage_path: Path | None = None):
         if storage_path is not None:
@@ -87,7 +94,9 @@ class ImportManager:
         if self.storage_path is None:
             raise AttributeError("no storage path was provided nor stored")
 
-        with self.storage_path.open("w") as f:
+        self.storage_path.parent.mkdir(parents=True, exist_ok=True)
+
+        with self.storage_path.open("w", encoding="utf-8") as f:
             print("storing imported paths")
             strings = [str(path) + '\n' for path in self.imported_paths]
             f.writelines(strings)
