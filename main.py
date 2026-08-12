@@ -1,23 +1,10 @@
-from PySide6.QtCore import QSize, Qt #type: ignore
-from PySide6.QtWidgets import ( #type:ignore
+from pathlib import Path
+from layout_colorwidget import Color
+from import_utils import import_widget, ImportManager
+from PySide6.QtCore import QSize
+from PySide6.QtWidgets import (
     QApplication,
-    QCheckBox,
-    QComboBox,
-    QDateEdit,
-    QDateTimeEdit,
-    QDial,
-    QDoubleSpinBox,
-    QFontComboBox,
-    QLabel,
-    QLCDNumber,
-    QLineEdit,
     QMainWindow,
-    QProgressBar,
-    QPushButton,
-    QRadioButton,
-    QSlider,
-    QSpinBox,
-    QTimeEdit,
     QVBoxLayout,
     QWidget,
 )
@@ -25,20 +12,20 @@ import sys
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
+        
         self.setWindowTitle("SimpleSample")
-        self.setMinimumSize(QSize(1400,800))
+        self.setMinimumSize(QSize(500,500))
+
+        self.import_manager = ImportManager(Path("./import.list"))
+
         layout = QVBoxLayout()
-        audioUploadB = QPushButton("Upload audio")
-        audioUploadB.setFixedSize(QSize(100,30))
+        audio_import_button = import_widget.Importer(self.import_manager)
         #button.setCheckable(True)
-        audioUploadB.clicked.connect(self.uploadAudio)
-        layout.addWidget(audioUploadB)
-        layout.addWidget(Color('red'))
+        layout.addWidget(audio_import_button)
+        #layout.addWidget(Color('red'))
         widget = QWidget()
         widget.setLayout(layout)
         self.setCentralWidget(widget)
-    def uploadAudio(self):
-        print("test")
 app = QApplication(sys.argv)
 window = MainWindow()
 window.show()
