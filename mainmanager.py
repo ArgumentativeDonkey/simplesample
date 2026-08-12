@@ -1,11 +1,13 @@
 import sys
 
+from PySide6.QtMultimedia import QMediaPlayer, QAudioDevice, QPlaybackOptions
 from PySide6.QtWidgets import (
     QFrame,
     QHBoxLayout,
     QLabel,
     QRadioButton,
     QVBoxLayout,
+    QWidget, QPushButton,
 )
 
 from import_utils import ImportManager
@@ -30,6 +32,6 @@ class TopBar(QFrame):
             v_layout.setContentsMargins(4,4,4,4)
             v_layout.setSpacing(2)
             self.filename = QLabel("No file")
-            self.playbackbutton = QRadioButton()
+            self.playbackbutton = QPushButton(">")
             v_layout.addWidget(self.filename)
             v_layout.addWidget(self.playbackbutton)
