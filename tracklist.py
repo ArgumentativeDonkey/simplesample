@@ -23,14 +23,14 @@ class TrackList(QWidget):
 
         self.list.itemSelectionChanged.connect(self.on_track_selected)
 
-        self.reload()
+        self.add_paths(self.import_manager.imported_paths)
         self.list.show()
 
         layout.addWidget(self.list)
 
     def reload(self):
         self.list.clear()
-        self.add_paths(self.import_manager.imported_paths)
+        self.import_manager.reload()
 
     def add_paths(self, paths: list[Path]):
         self.list.addTopLevelItems([QTreeWidgetItem([str(path), path.name]) for path in paths])

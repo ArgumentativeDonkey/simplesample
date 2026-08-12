@@ -33,10 +33,9 @@ class MixedFileDialog(QFileDialog):
             super().accept()
 
 class Importer(QWidget):
-    def __init__(self, import_manager: ImportManager, autosave: bool = True):
+    def __init__(self, import_manager: ImportManager):
         super().__init__()
         self.import_manager = import_manager
-        self.autosave = autosave
 
         layout = QVBoxLayout()
         self.setLayout(layout)
@@ -57,7 +56,7 @@ class Importer(QWidget):
             skip_warnings = False
             for path in selected_paths:
                 try:
-                    imported += self.import_manager.import_path(path)
+                    imported += self.import_manager.import_path(path, False)
                 except (ValueError, FileNotFoundError) as e:
                     if not skip_warnings:
                         msg = QMessageBox(self)
@@ -71,7 +70,7 @@ class Importer(QWidget):
                         if cb.isChecked():
                             skip_warnings = True
                         
-            if self.autosave:
+            if self.import_manager.autosave:
                 self.import_manager.save()
 
             if imported:

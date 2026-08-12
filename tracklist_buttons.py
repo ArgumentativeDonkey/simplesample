@@ -1,6 +1,7 @@
+from PySide6.QtCore import Qt
 import subprocess
 import sys
-from PySide6.QtWidgets import QPushButton, QVBoxLayout, QWidget
+from PySide6.QtWidgets import QPushButton, QVBoxLayout, QWidget, QCheckBox
 
 from import_utils import ImportManager
 
@@ -25,6 +26,9 @@ class TracklistButtons(QWidget):
         # self.edit_button.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_CommandLink))
         # self.edit_button.setIconSize(QSize(24, 24))
         self.edit_button.clicked.connect(self.open_editor)
+
+        self.autosave_cb = QCheckBox("Autosave Enabled")
+        self.autosave_cb.setCheckState(Qt.CheckState.Checked if self)
 
         self.setLayout(layout)
 

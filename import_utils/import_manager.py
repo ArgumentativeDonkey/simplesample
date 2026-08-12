@@ -8,11 +8,20 @@ class ImportManager(QObject):
     imported_paths: list[Path] = []
     storage_path: Path | None = None
     new_paths: Signal = Signal(list)
+    autosave: bool = True
 
-    def __init__(self, storage_path: Path | None = None):
+    def __init__(self, storage_path: Path | None = None, autosave: bool = True):
         super().__init__()
+        self.autosave = autosave
+        
         if storage_path is not None:
             self.storage_path = storage_path
+        self.reload()
+
+    def reload(self, storage_path: Path | None = None):
+        if storage_path is not None:
+            self.storage_path = storage_path
+        self.imported_paths = []
         if self.storage_path is not None:
             try:
                 with self.storage_path.open("r", encoding="utf-8") as f:
@@ -21,18 +30,21 @@ class ImportManager(QObject):
                     self.imported_paths = [Path(line.strip()) for line in lines]
                     print("imported paths imported!")
             except FileNotFoundError:
-                print("storage_path not found.")
+                print("storage path not found.")
 
     def tidy(self):
         """Tidies up imports by removing an import if it does not exist or is no longer a file"""
         self.imported_paths = [path for path in self.imported_paths if path.exists() and path.is_file()]
 
-    def import_file(self, path: Path):
+    def import_file(self, path: Path, autosave: bool | None = None):
         """Import a single file into the manager.
 
         Args:
             path (Path): The path to the file. Must point to an audio file (.mp3, .wav, .ogv, .mp4, .flac).
         """
+        if autosave is None:
+            autosave = self.autosave
+            
         if not path.exists():
             raise FileNotFoundError("that location does not exist")
 
@@ -48,8 +60,10 @@ class ImportManager(QObject):
         self.imported_paths.append(path)
         self.new_paths.emit([path])
         print(f"{path.name} imported")
+        if autosave:
+            self.save()
 
-    def import_directory(self, path: Path) -> int:
+    def import_directory(self, path: Path, autosave: bool | None = None) -> int:
         """Import the entire contents of a directory (including is subdirectories).
         All files, regardless of type, will try to be imported.
         This will not throw an exception if the directory is empty or contains no audio files.
@@ -60,6 +74,9 @@ class ImportManager(QObject):
         Returns:
             The number of files added to the import manager
         """
+        if autosave is None:
+            autosave = self.autosave
+        
         if not path.exists():
             raise FileNotFoundError("that location does not exist")
 
@@ -71,26 +88,36 @@ class ImportManager(QObject):
         files = [path for path in path.rglob("*") if path.is_file()]
         for file in files:
             try:
-                self.import_file(file)
+                self.import_file(file, False)
                 imported.append(file)
             except ValueError:
                 pass
             except FileNotFoundError as e:
                 print(f"internal error detected when trying to import {file}: {e}")
         print(f"{imported} files from {path} imported")
+        if autosave:
+            self.save()
         return len(imported)
 
-    def import_path(self, path: Path) -> int:
+    def import_path(self, path: Path, autosave: bool | None = None) -> int:
         """Import from a Path. Automatically detects whether a path is a file or a directory.
 
         Args:
             path (Path): The path to whatever you are trying to import.
         """
+        if autosave is None:
+            autosave = self.autosave
+        
         if path.is_file():
-            self.import_file(path)
+            self.import_file(path, False)
+            if autosave:
+                self.save()
             return 1
         else:
-            return self.import_directory(path)
+            n = self.import_directory(path, False)
+            if autosave:
+                self.save()
+            return n        
     
     def save(self, storage_path: Path | None = None):
         if storage_path is not None:
