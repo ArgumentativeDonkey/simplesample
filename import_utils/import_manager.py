@@ -1,12 +1,16 @@
 from pathlib import Path
 
+from PySide6.QtCore import QObject, Signal
+
 SUPPORTED_AUDIO_FILES = ['.mp3', '.wav', '.ogg', '.m4a', '.aac', '.ogv', '.mp4', '.flac', '.mkv', '.avi', '.mov', '.m4v', '.mjpeg']
 
-class ImportManager:
+class ImportManager(QObject):
     imported_paths: list[Path] = []
     storage_path: Path | None = None
+    new_paths: Signal = Signal(list)
 
     def __init__(self, storage_path: Path | None = None):
+        super().__init__()
         if storage_path is not None:
             self.storage_path = storage_path
         if self.storage_path is not None:
@@ -42,6 +46,7 @@ class ImportManager:
             raise ValueError("that's already been imported")
 
         self.imported_paths.append(path)
+        self.new_paths.emit([path])
         print(f"{path.name} imported")
 
     def import_directory(self, path: Path) -> int:
@@ -62,18 +67,18 @@ class ImportManager:
             raise ValueError("that location leads to a directory, not a file")
 
         print(f"importing {path}...")
-        imported = 0
+        imported: list[Path] = []
         files = [path for path in path.rglob("*") if path.is_file()]
         for file in files:
             try:
                 self.import_file(file)
-                imported += 1
+                imported.append(file)
             except ValueError:
                 pass
             except FileNotFoundError as e:
                 print(f"internal error detected when trying to import {file}: {e}")
         print(f"{imported} files from {path} imported")
-        return imported
+        return len(imported)
 
     def import_path(self, path: Path) -> int:
         """Import from a Path. Automatically detects whether a path is a file or a directory.
@@ -101,7 +106,9 @@ class ImportManager:
             strings = [str(path) + '\n' for path in self.imported_paths]
             f.writelines(strings)
             print("imported paths stored!")
-    
+
+    def remove(self, path: Path):
+        self.imported_paths.remove(path)
 
 if __name__ == "__main__":
     pass

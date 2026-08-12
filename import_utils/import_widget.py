@@ -1,6 +1,17 @@
 from pathlib import Path
-from PySide6.QtWidgets import QWidget, QPushButton, QFileDialog, QVBoxLayout, QTreeView, QListView, QMessageBox, QCheckBox
-from import_utils import ImportManager, SUPPORTED_AUDIO_FILES
+
+from PySide6.QtWidgets import (
+    QCheckBox,
+    QFileDialog,
+    QListView,
+    QMessageBox,
+    QPushButton,
+    QTreeView,
+    QVBoxLayout,
+    QWidget,
+)
+
+from import_utils import SUPPORTED_AUDIO_FILES, ImportManager
 
 MEDIA_FILTER = f"Media Files ({' '.join('*' + filetype for filetype in SUPPORTED_AUDIO_FILES)});;All Files (*)"
 
