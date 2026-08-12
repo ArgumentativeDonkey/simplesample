@@ -1,6 +1,6 @@
+import sys
 from pathlib import Path
-from layout_colorwidget import Color
-from import_utils import import_widget, ImportManager
+
 from PySide6.QtCore import QSize
 from PySide6.QtWidgets import (
     QApplication,
@@ -8,7 +8,11 @@ from PySide6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
-import sys
+
+from import_utils import ImportManager, import_widget
+from layout_colorwidget import Color
+
+
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -18,11 +22,6 @@ class MainWindow(QMainWindow):
 
         self.import_manager = ImportManager(Path("./import.list"))
 
-        print("Tidying...")
-        self.import_manager.tidy()
-        self.import_manager.save()
-        print("Done tidying.")
-
         layout = QVBoxLayout()
         audio_import_button = import_widget.Importer(self.import_manager)
         #button.setCheckable(True)
@@ -31,6 +30,12 @@ class MainWindow(QMainWindow):
         widget = QWidget()
         widget.setLayout(layout)
         self.setCentralWidget(widget)
+
+        print("Tidying...")
+        self.import_manager.tidy()
+        self.import_manager.save()
+        print("Done tidying.")
+            
 app = QApplication(sys.argv)
 window = MainWindow()
 window.show()
