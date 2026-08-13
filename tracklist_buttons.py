@@ -1,7 +1,8 @@
-from PySide6.QtCore import Qt
 import subprocess
 import sys
-from PySide6.QtWidgets import QPushButton, QVBoxLayout, QWidget, QCheckBox
+
+from PySide6.QtCore import Qt
+from PySide6.QtWidgets import QCheckBox, QMessageBox, QPushButton, QVBoxLayout, QWidget
 
 from import_utils import ImportManager
 
@@ -27,20 +28,44 @@ class TracklistButtons(QWidget):
         # self.edit_button.setIconSize(QSize(24, 24))
         self.edit_button.clicked.connect(self.open_editor)
 
+        layout.addWidget(self.edit_button)
+
+        self.save_button = QPushButton("💾 Save")
+        self.save_button.clicked.connect(self.save_config)
+
+        layout.addWidget(self.save_button)
+
         self.autosave_cb = QCheckBox("Autosave Enabled")
-        self.autosave_cb.setCheckState(Qt.CheckState.Checked if self)
+        self.autosave_cb.setCheckState(Qt.CheckState.Checked if self.import_manager.autosave else Qt.CheckState.Unchecked)
+        self.autosave_cb.toggled.connect(self.toggle_autosave)
+        
+        layout.addWidget(self.autosave_cb)
 
         self.setLayout(layout)
 
     def open_editor(self):
-        abs_path = str(self.import_manager.storage_path)
-        if sys.platform == "win32":
-            subprocess.Popen(["notepad.exe", abs_path])
-        elif sys.platform == "darwin": 
-            subprocess.Popen(["open", "-e", abs_path])
-        else: 
-            try:
-                subprocess.Popen(["gedit", abs_path])
-            except FileNotFoundError:
-                subprocess.Popen(["nano", abs_path])
+        if self.import_manager.storage_path is None:
+            QMessageBox.critical(self, "Error", "No storage path set")
+            return
+        path = str(self.import_manager.storage_path.resolve().absolute())
+    
+        try:
+            if sys.platform == "win32":
+                subprocess.Popen(["notepad.exe", path])
+    
+            elif sys.platform == "darwin":
+                subprocess.Popen(["open", "-e", path])
+    
+            else:
+                subprocess.Popen(["xdg-open", path])
+    
+        except (FileNotFoundError, PermissionError, ValueError) as e:
+            QMessageBox.critical(self, "Error", f"Could not open editor: {e}")
+          
+
+    def toggle_autosave(self, checked: bool):
+        self.import_manager.autosave = checked
+
+    def save_config(self):
+        self.import_manager.save()
         
